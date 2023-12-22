@@ -1,39 +1,76 @@
 #include <mbed.h>
 #include <math.h>
 
-#include "pm2_drivers/PM2_Drivers.h"
+#include "pm2_drivers/DebounceIn.h"
+#include "pm2_drivers/Servo.h"
+#include "pm2_drivers/EncoderCounter.h"
+#include "pm2_drivers/DCMotor.h"
+#include "pm2_drivers/UltrasonicSensor.h"
+#include "pm2_drivers/IMU.h"
+#include "pm2_drivers/SensorBar.h"
 #include "eigen/Dense.h"
 
 #define NEW_PES_BOARD_VERSION
-
 #ifdef NEW_PES_BOARD_VERSION
-    #define PN_enable_Motors PB_15
-    #define PN_pwm_M1 PB_13
-    #define PN_pwm_M2 PA_9
-    #define PN_encoder_M1_A PA_6
-    #define PN_encoder_M1_B PC_7
-    #define PN_encoder_M2_A PB_6
-    #define PN_encoder_M2_B PB_7
+    #define USER_BUTTON PC_13
+    #define USER_LED PA_5
+
+    #define PB_D0 PB_2
+    #define PB_D1 PC_8
+    #define PB_D2 PC_6
+    #define PB_D3 PB_12
+
+    #define PB_PWM_M1 PB_13
+    #define PB_PWM_M2 PA_9
+    #define PB_PWM_M3 PA_10
+
+    #define PB_ENC_A_M1 PA_6
+    #define PB_ENC_B_M1 PC_7
+    #define PB_ENC_A_M2 PB_6
+    #define PB_ENC_B_M2 PB_7
+    #define PB_ENC_A_M3 PA_0
+    #define PB_ENC_B_M3 PA_1
+
+    #define PB_IMU_SDA PC_9
+    #define PB_IMU_SCL PA_8
+
+    #define PN_ENABLE_DCMOTORS PB_15
 #else
-    #define PN_enable_Motors PB_2
-    #define PN_pwm_M1 PA_8
-    #define PN_pwm_M2 PA_9
-    #define PN_encoder_M1_A PB_6
-    #define PN_encoder_M1_B PB_7
-    #define PN_encoder_M2_A PA_6
-    #define PN_encoder_M2_B PC_7
+    #define USER_BUTTON PC_13
+    #define USER_LED PA_5
+
+    #define PB_D0 PC_9  // ???
+    #define PB_D1 PC_8  // ???
+    #define PB_D2 PC_6  // ???
+    #define PB_D3 PB_12 // ???
+
+    #define PB_PWM_M1 PA_8
+    #define PB_PWM_M2 PA_9
+    #define PB_PWM_M3 PA_13 // ???
+
+    #define PB_ENC_A_M1 PB_6
+    #define PB_ENC_B_M1 PB_7
+    #define PB_ENC_A_M2 PA_6
+    #define PB_ENC_A_M2 PC_7
+    #define PB_ENC_A_M3 PA_1 // ???
+    #define PB_ENC_B_M3 PA_0 // ???
+
+    #define PB_IMU_SDA // ???
+    #define PB_IMU_SCL // ???
+    
+    #define PN_ENABLE_DCMOTORS PB_2 // PB_13 ???
 #endif
 
 #define M_PI 3.14159265358979323846  // number pi
 
 // logical variable main task
-bool do_execute_main_task = false;  // this variable will be toggled via the user button (blue button) to or not to execute the main task
+bool do_execute_main_task = false; 
 
 // user button on nucleo board
-Timer user_button_timer;            // create Timer object which we use to check if user button was pressed for a certain time (robust against signal bouncing)
-InterruptIn user_button(PC_13);     // create InterruptIn interface object to evaluate user button falling and rising edge (no blocking code in ISR)
-void user_button_pressed_fcn();     // custom functions which gets executed when user button gets pressed and released, definition below
-void user_button_released_fcn();
+Timer user_button_timer;            
+DebounceIn user_button(USER_BUTTON);
+// Function that triggers main task execution   
+void user_button_pressed_fcn();    
 
 // controller functions
 float ang_cntrl_fcn(const float& Kp, const float& Kp_nl, const float& angle);
@@ -42,41 +79,30 @@ float vel_cntrl_v2_fcn(const float& wheel_speed_max, const float& b, const float
 
 int main()
 {
+    // states and actual state for state machine, machine will have 3 states:
+    // initial - to enable all systems
+    // follow - to follow the object or line
+    // sleep - to wait for signal from the environment (e.g. new object)
+    enum RobotState {
+        INITIAL,
+        FOLLOW,
+        SLEEP,
+    } robot_state = RobotState::INITIAL;
+
+    // Condition for sensor
+    int i = 0;
+
+    // attach button fall function to user button object
+    user_button.fall(&user_button_pressed_fcn);
+
     // while loop gets executed every main_task_period_ms milliseconds
-    const int main_task_period_ms = 10;   // define main task period time in ms e.g. 50 ms -> main task runns 20 times per second
-    Timer main_task_timer;                // create Timer object which we use to run the main task every main task period time in ms
+    const int main_task_period_ms = 10;   // define main task period time in ms
+    Timer main_task_timer;  
 
     // led on nucleo board
-    DigitalOut user_led(LED1);      // create DigitalOut object to command user led
+    DigitalOut user_led(USER_LED); 
 
-    // Sharp GP2Y0A41SK0F, 4-40 cm IR Sensor
-    float ir_distance_mV = 0.0f;    // define variable to store measurement
-    AnalogIn ir_analog_in(PC_2);    // create AnalogIn object to read in infrared distance sensor, 0...3.3V are mapped to 0...1
-
-    // 78:1, 100:1, ... Metal Gearmotor 20Dx44L mm 12V CB
-    DigitalOut enable_motors(PN_enable_Motors);    // create DigitalOut object to enable dc motors
-
-    // create SpeedController objects
-    FastPWM pwm_M1(PN_pwm_M1);  // motor M1 is closed-loop speed controlled (angle velocity)
-    FastPWM pwm_M2(PN_pwm_M2);   // motor M2 is closed-loop speed controlled (angle velocity)
-    EncoderCounter  encoder_M1(PN_encoder_M1_A, PN_encoder_M1_B); // create encoder objects to read in the encoder counter values
-    EncoderCounter  encoder_M2(PN_encoder_M2_A, PN_encoder_M2_B);
-    const float max_voltage = 12.0f;                  // define maximum voltage of battery packs, adjust this to 6.0f V if you only use one batterypack
-    const float counts_per_turn = 20.0f * 78.125f;    // define counts per turn at gearbox end: counts/turn * gearratio
-    const float kn = 180.0f / 12.0f;                  // define motor constant in rpm per V
-    
-    // create SpeedController objects
-    SpeedController* speedControllers[2];
-    speedControllers[0] = new SpeedController(counts_per_turn, kn, max_voltage, pwm_M1, encoder_M1);
-    speedControllers[1] = new SpeedController(counts_per_turn, kn, max_voltage, pwm_M2, encoder_M2);
-    //speedControllers[0]->setMaxAccelerationRPS(999.0f); // big number, so it is no doing anything
-    //speedControllers[1]->setMaxAccelerationRPS(999.0f); // big number, so it is no doing anything
-
-    // create SensorBar object for sparkfun line follower array
-    I2C i2c(PB_9, PB_8);
-    SensorBar sensor_bar(i2c, 0.1175f); // second input argument is distance from bar to wheel axis
-
-    // robot kinematics
+    // Robot kinematics
     const float r_wheel = 0.0358f / 2.0f; // wheel radius
     const float L_wheel = 0.143f;         // distance from wheel to wheel
     Eigen::Matrix2f Cwheel2robot; // transform wheel to robot
@@ -90,94 +116,103 @@ int main()
     robot_coord.setZero();
     wheel_speed.setZero();
 
-    // attach button fall and rise functions to user button object
-    user_button.fall(&user_button_pressed_fcn);
-    user_button.rise(&user_button_released_fcn);
+    // Sensor data evalution
+    const float bar_dist = 0.1175f; // distance from bar to wheel axis 
 
-    // start timer
+    // As robot can have multiple sensors on, here is the place to define them
+    // Pixy cam ...
+    // IR range sensor ...
+    // Sensor bar
+    I2C i2c(PB_9, PB_8);
+    SensorBar sensor_bar(i2c, bar_dist);
+
+    // Digital out object for enabling motors
+    DigitalOut enable_motors(PN_ENABLE_DCMOTORS);
+
+    // In the robot there will be used 78:1 Metal Gearmotor 20Dx44L mm 12V CB
+    // Define variables and create DC motor objects
+    const float voltage_max = 12.0f;
+    const float gear_ratio = 78.125f; 
+    const float kn = 180.0f / 12.0f; //motor constant rpm / V
+    const float velocity_max = kn * voltage_max / 60.0f; // Max velocity that can be reached
+    DCMotor motor_M1(PB_PWM_M1, PB_ENC_A_M1, PB_ENC_B_M1, gear_ratio, kn, voltage_max);
+    motor_M1.setMaxVelocity(velocity_max); 
+    DCMotor motor_M2(PB_PWM_M2, PB_ENC_A_M2, PB_ENC_B_M2, gear_ratio, kn, voltage_max);
+    motor_M2.setMaxVelocity(velocity_max);
+
+    // Timer to measure task execution time
     main_task_timer.start();
 
-    while (true) { // this loop will run forever
+    while (true) {
 
         main_task_timer.reset();
 
-        if (do_execute_main_task) {
-
-            // enable hardwaredriver dc motors: 0 -> disabled, 1 -> enabled
-            enable_motors = 1;
-
-            // read SensorBar
-            static float sensor_bar_avgAngleRad = 0.0f; // by making this static it will not be overwritten (only fist time set to zero)
+        if (do_execute_main_task) { //After pressing user button
+            static float sensor_bar_avgAngleRad = 0.0f;
             if (sensor_bar.isAnyLedActive()) {
                 sensor_bar_avgAngleRad = sensor_bar.getAvgAngleRad();
+                i = 0;
+            } else {
+                i += 1;
             }
 
             const static float Kp = 2.0f; // by making this const static it will not be overwritten and only initiliazed once
             const static float Kp_nl = 17.0f;
             robot_coord(1) = ang_cntrl_fcn(Kp, Kp_nl, sensor_bar_avgAngleRad);
-
-            // nonlinear controllers version 1 (whatever came to my mind)
-            /*
-            const static float vel_max = 0.3374f; //0.10f;
-            const static float vel_min = 0.00f; //0.02f;
-            const static float ang_max = 27.0f * M_PI / 180.0f;
-            robot_coord(0) = vel_cntrl_v1_fcn(vel_max, vel_min, ang_max, sensor_bar_avgAngleRad);
-            */
-
             // nonlinear controllers version 2 (one wheel always at full speed controller)
-            ///*
-            const static float wheel_speed_max = max_voltage * kn / 60.0f * 2.0f * M_PI;
+
+            const static float wheel_speed_max = ((voltage_max * kn / 60.0f * 2.0f * M_PI))/5; 
             const static float b = L_wheel / (2.0f * r_wheel);
             robot_coord(0) = vel_cntrl_v2_fcn(wheel_speed_max, b, robot_coord(1), Cwheel2robot);
-            //*/
 
             // transform robot coordinates to wheel speed
             wheel_speed = Cwheel2robot.inverse() * robot_coord;
 
-            // read analog input
-            ir_distance_mV = 1.0e3f * ir_analog_in.read() * 3.3f;
+            switch (robot_state) {
+                case RobotState::INITIAL:
+                    enable_motors = 1;
 
-            // command speedController objects
-            speedControllers[0]->setDesiredSpeedRPS(wheel_speed(0) / (2.0f * M_PI)); // set a desired speed for speed controlled dc motors M1
-            speedControllers[1]->setDesiredSpeedRPS(wheel_speed(1) / (2.0f * M_PI)); // set a desired speed for speed controlled dc motors M2
+                    robot_state = RobotState::FOLLOW;
+                    break;
 
-        } else {
+                case RobotState::FOLLOW:
+                    motor_M1.setVelocity(wheel_speed(0) / (2.0f * M_PI)); // set a desired speed for speed controlled dc motors M1
+                    motor_M2.setVelocity(wheel_speed(1) / (2.0f * M_PI)); // set a desired speed for speed controlled dc motors M2
 
-            enable_motors = 0;
+                    if (i > 20) {
+                        robot_state = RobotState::SLEEP;
+                    }
+                    break;
 
-            ir_distance_mV = 0.0f;
+                case RobotState::SLEEP:
+                    motor_M1.setVelocity(0);
+                    motor_M2.setVelocity(0);
 
-            speedControllers[0]->setDesiredSpeedRPS(0.0f);
-            speedControllers[1]->setDesiredSpeedRPS(0.0f);
-
+                    if (i == 0) {
+                        robot_state = RobotState::FOLLOW;
+                    }
+                default:
+                    break; // do nothing
+            }
         }
-
         user_led = !user_led;
 
-        // do only output via serial what's really necessary (this makes your code slow)
-        printf("%f, %f, %f\r\n", speedControllers[0]->getSpeedRPS(), speedControllers[1]->getSpeedRPS(), sensor_bar.getAvgAngleRad() * 180.0f / M_PI);
+        printf("%f, %f, %f\r\n", motor_M1.getVelocity(), motor_M2.getVelocity(), sensor_bar.getAvgAngleRad() * 180.0f / M_PI);
 
-        // read timer and make the main thread sleep for the remaining time span (non blocking)
         int main_task_elapsed_time_ms = std::chrono::duration_cast<std::chrono::milliseconds>(main_task_timer.elapsed_time()).count();
         thread_sleep_for(main_task_period_ms - main_task_elapsed_time_ms);
     }
+    
+
 }
+
 
 void user_button_pressed_fcn()
 {
-    user_button_timer.start();
-    user_button_timer.reset();
+    // do_execute_main_task if the button was pressed
+    do_execute_main_task = !do_execute_main_task;
 }
 
-void user_button_released_fcn()
-{
-    // read timer and toggle do_execute_main_task if the button was pressed longer than the below specified time
-    int user_button_elapsed_time_ms = std::chrono::duration_cast<std::chrono::milliseconds>(user_button_timer.elapsed_time()).count();
-    user_button_timer.stop();
-    if (user_button_elapsed_time_ms > 200) {
-        do_execute_main_task = !do_execute_main_task;
-    }
-}
 
 float ang_cntrl_fcn(const float& Kp, const float& Kp_nl, const float& angle)
 {
@@ -209,5 +244,6 @@ float vel_cntrl_v2_fcn(const float& wheel_speed_max, const float& b, const float
         _wheel_speed(1) = wheel_speed_max;
     }
     _robot_coord = Cwheel2robot * _wheel_speed;
+
     return _robot_coord(0);
 }
