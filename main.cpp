@@ -90,13 +90,13 @@ int main()
     } robot_state = RobotState::INITIAL;
 
     // Condition for sensor
-    int i = 0;
+    int i = 51;
 
     // attach button fall function to user button object
     user_button.fall(&user_button_pressed_fcn);
 
     // while loop gets executed every main_task_period_ms milliseconds
-    const int main_task_period_ms = 10;   // define main task period time in ms
+    const int main_task_period_ms = 20;   // define main task period time in ms
     Timer main_task_timer;  
 
     // led on nucleo board
@@ -152,7 +152,8 @@ int main()
             if (sensor_bar.isAnyLedActive()) {
                 sensor_bar_avgAngleRad = sensor_bar.getAvgAngleRad();
                 i = 0;
-            } else {
+            } 
+            else {
                 i += 1;
             }
 
@@ -161,25 +162,33 @@ int main()
             robot_coord(1) = ang_cntrl_fcn(Kp, Kp_nl, sensor_bar_avgAngleRad);
             // nonlinear controllers version 2 (one wheel always at full speed controller)
 
-            const static float wheel_speed_max = ((voltage_max * kn / 60.0f * 2.0f * M_PI))/5; 
+            const static float wheel_speed_max = 20* voltage_max * kn / (60.0f * 2.0f * M_PI); 
             const static float b = L_wheel / (2.0f * r_wheel);
             robot_coord(0) = vel_cntrl_v2_fcn(wheel_speed_max, b, robot_coord(1), Cwheel2robot);
 
             // transform robot coordinates to wheel speed
             wheel_speed = Cwheel2robot.inverse() * robot_coord;
 
+            motor_M1.setVelocity(wheel_speed(0) / (2.0f * M_PI)); // set a desired speed for speed controlled dc motors M1
+            motor_M2.setVelocity(wheel_speed(1) / (2.0f * M_PI)); // set a desired speed for speed controlled dc motors M2
+
+            
             switch (robot_state) {
                 case RobotState::INITIAL:
                     enable_motors = 1;
 
-                    robot_state = RobotState::FOLLOW;
+                    if (i > 50) {
+                        robot_state = RobotState::SLEEP;
+                    } else {
+                        robot_state = RobotState::FOLLOW;
+                    }
                     break;
 
                 case RobotState::FOLLOW:
                     motor_M1.setVelocity(wheel_speed(0) / (2.0f * M_PI)); // set a desired speed for speed controlled dc motors M1
                     motor_M2.setVelocity(wheel_speed(1) / (2.0f * M_PI)); // set a desired speed for speed controlled dc motors M2
 
-                    if (i > 20) {
+                    if (i > 50) {
                         robot_state = RobotState::SLEEP;
                     }
                     break;
@@ -191,28 +200,25 @@ int main()
                     if (i == 0) {
                         robot_state = RobotState::FOLLOW;
                     }
+                    break;
                 default:
                     break; // do nothing
             }
         }
         user_led = !user_led;
 
-        printf("%f, %f, %f\r\n", motor_M1.getVelocity(), motor_M2.getVelocity(), sensor_bar.getAvgAngleRad() * 180.0f / M_PI);
+        printf("%f, %f, %f, %d, %d\r\n", motor_M1.getVelocity(), motor_M2.getVelocity(), sensor_bar.getAvgAngleRad() * 180.0f / M_PI, i, sensor_bar.isAnyLedActive());
 
         int main_task_elapsed_time_ms = std::chrono::duration_cast<std::chrono::milliseconds>(main_task_timer.elapsed_time()).count();
         thread_sleep_for(main_task_period_ms - main_task_elapsed_time_ms);
     }
-    
-
 }
-
 
 void user_button_pressed_fcn()
 {
     // do_execute_main_task if the button was pressed
     do_execute_main_task = !do_execute_main_task;
 }
-
 
 float ang_cntrl_fcn(const float& Kp, const float& Kp_nl, const float& angle)
 {
