@@ -42,13 +42,13 @@ All frame parts 3D models are localized in CAD folder.
 In order to run the project you need to have Mbed Studio with which you can compile the ``main`` program and run it on the microcontroller. All the libraries you need are included in the repository. If you use a different design, kinematics, or hardware, you need to change the appropriate variables for the program to run properly. Also, if you are not using a custom PES Board, you need to change pins names that are passed as parameters while objects are defined.
 
 ## Kinematics
-Comprehensive explanation and description of the kinematics of a differential robot can be found here. <!-- TODO add hyperlinks  -->
+Comprehensive explanation and description of the kinematics of a differential robot can be found [here](/docs/documentation/kinematics.md).
 
 ## Functionalities
 As mentioned, the robot has three different functionalities listed below.
 <!-- TODO add hyperlinks  -->
 ### 1. Line follower
-The line follower functionality enables the robot to autonomously navigate along predefined paths by detecting and following lines on the ground. Using a specialized line following sensor, the robot continuously scans the surface for contrasting colors or reflective markers that define the desired path. Real-time adjustments in the robot's movements are made based on the sensor's feedback, ensuring precise tracking and adherence to the designated route. Details of working algorithm you can find HERE 
+The line follower functionality enables the robot to autonomously navigate predefined paths by continuously scanning for contrasting colors or reflective markers with a specialized sensor, making real-time adjustments based on feedback to ensure precise tracking and adherence to the designated route. Details of algorithm you can find [here](/docs/documentation/line_follower.md)
 ### 2. Obstacle avoider
 The obstacle avoidance functionality equips the robot with infrared distance sensors to detect objects within its vicinity. When an obstacle is detected, the robot swiftly adjusts its course to avoid collision, either by changing direction or maneuvering around the obstacle. This feature ensures the robot's safe navigation in dynamic environments, preventing potential collisions and ensuring smooth operation. Details of working algorithm you can find HERE 
 ### 3. Pixy2 object follower
