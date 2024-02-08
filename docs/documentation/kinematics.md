@@ -55,16 +55,14 @@ $\displaystyle v = \frac{\omega_1 * r}{L} + \frac{\omega_2 * r}{L} $
 
 From the above equations, a transformation matrix can be determined that allows linear and rotational speed to be determined from the speed of the wheels.
 
-\[ 
 \begin{bmatrix}
 \frac{r}{2} & \frac{r}{2} \\
 \frac{r}{L} & -\frac{r}{L} \\
 \end{bmatrix}
-\] 
+
 
 Therefore, to calculate linear and rotational speed, you need to multiply the transformation matrix and the wheel speed matrix. 
 
-\[ 
 \begin{bmatrix}
 \ v \\
 \ \omega \\
@@ -79,20 +77,19 @@ Therefore, to calculate linear and rotational speed, you need to multiply the tr
 \ \omega_1 \\
 \ \omega_1 \\
 \end{bmatrix}
-\] 
 
 However, our goal is usually the reverse calculation, that is, from linear and rotational speed to wheel speed. In this case, the transformation matrix must be inverted resulting in the following matrix. 
 
-\[ 
+
 \begin{bmatrix}
 \frac{1}{r} & \frac{L}{2*r} \\
 \frac{1}{r} & -\frac{L}{2*r} \\
 \end{bmatrix}
-\] 
+
 
 With this, the calculation of the wheel speed matrix is as follows:
 
-\[ 
+
 \begin{bmatrix}
 \ \omega_1 \\
 \ \omega_1 \\
@@ -107,7 +104,7 @@ With this, the calculation of the wheel speed matrix is as follows:
 \ v \\
 \ \omega \\
 \end{bmatrix}
-\] 
+
 
 
 ## Coding
@@ -151,3 +148,4 @@ motor_left.setVelocity(wheel_speed(1) / (2.0f * M_PI));
 
 ## Another useful dependencies
 <!-- TODO add something about turn radius -->
+
