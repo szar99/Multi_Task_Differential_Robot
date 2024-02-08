@@ -17,7 +17,7 @@ The output values in this case are:
 - For these calculations, we'll leverage the Eigen library, renowned for its ability to define matrices and vectors, streamlining the computation process.
 - All the calculations should be done in **SI** units.
 ## Math
-<!-- TODO add picture -->
+<center><img src="../images/kinematics.png" alt="Kinematics" width="600" /></center>
 
 The computational process should start by defining geometric relationships and begin with simple formulas that will allow us to create transformation matrices from the wheels to the center of the robot, that is, from their wheel speeds to linear and rotational speeds. Important in this process is to define which direction of rotation of the robot is positive and which is negative.
 
@@ -55,15 +55,19 @@ $\displaystyle v = \frac{\omega_1 * r}{L} + \frac{\omega_2 * r}{L} $
 
 From the above equations, a transformation matrix can be determined that allows linear and rotational speed to be determined from the speed of the wheels.
 
-\begin{bmatrix}
+<center><img src="../images/Cwheel2robot.png" alt="Cwheel2robot" width="400" /></center>
+
+<!-- \begin{bmatrix}
 \frac{r}{2} & \frac{r}{2} \\
 \frac{r}{L} & -\frac{r}{L} \\
-\end{bmatrix}
+\end{bmatrix} -->
 
 
 Therefore, to calculate linear and rotational speed, you need to multiply the transformation matrix and the wheel speed matrix. 
 
-\begin{bmatrix}
+<center><img src="../images/lin_rot_speed_calc.png" alt="lin_rot_speed_calc" width="400" /></center>
+
+<!-- \begin{bmatrix}
 \ v \\
 \ \omega \\
 \end{bmatrix}
@@ -76,21 +80,22 @@ Therefore, to calculate linear and rotational speed, you need to multiply the tr
 \begin{bmatrix}
 \ \omega_1 \\
 \ \omega_1 \\
-\end{bmatrix}
+\end{bmatrix} -->
 
 However, our goal is usually the reverse calculation, that is, from linear and rotational speed to wheel speed. In this case, the transformation matrix must be inverted resulting in the following matrix. 
 
+<center><img src="../images/Crobot2wheel.png" alt="Crobot2wheel" width="400" /></center>
 
-\begin{bmatrix}
+<!-- \begin{bmatrix}
 \frac{1}{r} & \frac{L}{2*r} \\
 \frac{1}{r} & -\frac{L}{2*r} \\
-\end{bmatrix}
+\end{bmatrix} -->
 
 
 With this, the calculation of the wheel speed matrix is as follows:
 
-
-\begin{bmatrix}
+<center><img src="../images/wheel_rotational_speed_calc.png" alt="wheel_rotational_speed_calc" width="400" /></center>
+<!-- \begin{bmatrix}
 \ \omega_1 \\
 \ \omega_1 \\
 \end{bmatrix}
@@ -103,7 +108,7 @@ With this, the calculation of the wheel speed matrix is as follows:
 \begin{bmatrix}
 \ v \\
 \ \omega \\
-\end{bmatrix}
+\end{bmatrix} -->
 
 
 
