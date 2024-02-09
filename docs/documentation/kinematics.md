@@ -54,6 +54,7 @@ $\displaystyle v = \frac{\omega_1 * r}{L} + \frac{\omega_2 * r}{L} $
 ### Transformation matrix
 
 From the above equations, a transformation matrix can be determined that allows linear and rotational speed to be determined from the speed of the wheels.
+<!-- TODO solve the problems with pictures - matrixies -->
 
 <center><img src="../images/Cwheel2robot.png" alt="Cwheel2robot" width="400" /></center>
 

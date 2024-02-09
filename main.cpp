@@ -39,8 +39,7 @@ int main()
     enum RobotState {
         INITIAL,
         FOLLOW,
-        LOOKFOR,
-        TURN2OBJECT
+        SLEEP
     } robot_state = RobotState::INITIAL;
 
     // attach button fall function to user button object
@@ -122,7 +121,7 @@ int main()
                     if (isNewMessagePixy == true) {
                         robot_state = RobotState::FOLLOW;
                     } else {
-                        robot_state = RobotState::LOOKFOR;
+                        robot_state = RobotState::SLEEP;
                     }
                     break;
 
@@ -138,15 +137,26 @@ int main()
                     isNewMessagePixy = pixy.checkForNewMessage();
 
                     if (isNewMessagePixy == false) {
-                        robot_state = RobotState::LOOKFOR;
+                        robot_state = RobotState::SLEEP;
                     }
                     break;
+                case RobotState::SLEEP:
+                    motor_M1.setVelocity(0.0f);
+                    motor_M2.setVelocity(0.0f);
+                    pixy.followerEnable(false);
+                    pixy.setServos(500, 500);
+                    isNewMessagePixy = pixy.checkForNewMessage();
 
+                    if (isNewMessagePixy == true) {
+                        pixy.followerEnable(true);
+                        robot_state = RobotState::FOLLOW;
+                    }
+                    break;
+                /*
                 case RobotState::LOOKFOR:
                     motor_M1.setVelocity(0.0f);
                     motor_M2.setVelocity(0.0f);
                     pixy.followerEnable(false);
-                    isNewMessagePixy = pixy.checkForNewMessage();
 
                     for (i = pixy.getPanCommand(); i < 1000; i++) {
                         pixy.setServos(i, 500);
@@ -192,7 +202,7 @@ int main()
                         }
                     }
 
-                    /*
+                    
                     iter += 1;
                     if (iter == 1) {
                         pixy.setServos(500, y_threshold);
@@ -209,8 +219,8 @@ int main()
                     } else if (iter == 600) {
                         iter = 0;
                     }
-                    */
-
+                    
+                    printf("%d \n",found);
                     if (found == true) {
                         found = false;
                         robot_state = RobotState::TURN2OBJECT;
@@ -229,19 +239,20 @@ int main()
 
                     pixy.followerEnable(true);
                     
-                    if (pixy.getX() < FRAMEWIDTH/2 + 10 & pixy.getX() > FRAMEWIDTH/2 -10 & x > 490.0f & x < 510.0f) {
+                    if (isNewMessagePixy == true) {
                         robot_state = RobotState::FOLLOW;
                     }
+                    isNewMessagePixy = pixy.checkForNewMessage();
 
-
-
+                    break;
+                */
                 default:
                     break; // do nothing
             }
         }    
         user_led = !user_led;
 
-        printf("%f, %f \n",x, y);
+        //printf("%f, %f \n",x, y);
         //printf("F %f,B %f,R %f,L %f \r\n", ir_distance_front_cm, ir_distance_back_cm, ir_distance_right_cm, ir_distance_left_cm);
         //printf("init %f,actual %f \r\n", init_rotation, actual_rotation);
         //printf("%f, %f \n", motor_M1.getRotation(), motor_M2.getRotation());
@@ -250,7 +261,10 @@ int main()
 
 
         int main_task_elapsed_time_ms = std::chrono::duration_cast<std::chrono::milliseconds>(main_task_timer.elapsed_time()).count();
-        thread_sleep_for(main_task_period_ms - main_task_elapsed_time_ms);
+        if (main_task_elapsed_time_ms <= 20){
+            thread_sleep_for(main_task_period_ms - main_task_elapsed_time_ms);
+        }
+        
     }
 }
 void user_button_pressed_fcn()
