@@ -13,7 +13,6 @@
 #include "pm2_drivers/LineFollower.h"
 #include "pm2_drivers/PixyCam2.h"
 
-
 #define M_PI 3.14159265358979323846  // number pi
 
 
@@ -83,7 +82,7 @@ int main()
     DCMotor motor_M2(PB_PWM_M2, PB_ENC_A_M2, PB_ENC_B_M2, gear_ratio, kn, voltage_max); //LEFT
     motor_M2.setEnableMotionPlanner(true);
     motor_M2.setMaxVelocity(velocity_max / 2.5f); //left
-
+    
 
     // Timer to measure task execution time
     main_task_timer.start();
@@ -103,7 +102,6 @@ int main()
     int i;
     int j;
 
-    
 
     while (true) {
         

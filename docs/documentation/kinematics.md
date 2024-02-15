@@ -56,17 +56,16 @@ $\displaystyle v = \frac{\omega_1 * r}{L} + \frac{\omega_2 * r}{L} $
 From the above equations, a transformation matrix can be determined that allows linear and rotational speed to be determined from the speed of the wheels.
 <!-- TODO solve the problems with pictures - matrixies -->
 
-<center><img src="../images/Cwheel2robot.png" alt="Cwheel2robot" width="400" /></center>
+<center><img src="../images/Cwheel2robot.png" alt="Cwheel2robot" width="100" /></center>
 
 <!-- \begin{bmatrix}
 \frac{r}{2} & \frac{r}{2} \\
 \frac{r}{L} & -\frac{r}{L} \\
 \end{bmatrix} -->
 
-
 Therefore, to calculate linear and rotational speed, you need to multiply the transformation matrix and the wheel speed matrix. 
 
-<center><img src="../images/lin_rot_speed_calc.png" alt="lin_rot_speed_calc" width="400" /></center>
+<center><img src="../images/lin_rot_speed_calc.png" alt="lin_rot_speed_calc" width="200" /></center>
 
 <!-- \begin{bmatrix}
 \ v \\
@@ -85,7 +84,7 @@ Therefore, to calculate linear and rotational speed, you need to multiply the tr
 
 However, our goal is usually the reverse calculation, that is, from linear and rotational speed to wheel speed. In this case, the transformation matrix must be inverted resulting in the following matrix. 
 
-<center><img src="../images/Crobot2wheel.png" alt="Crobot2wheel" width="400" /></center>
+<center><img src="../images/Crobot2wheel.png" alt="Crobot2wheel" width="100" /></center>
 
 <!-- \begin{bmatrix}
 \frac{1}{r} & \frac{L}{2*r} \\
@@ -95,7 +94,7 @@ However, our goal is usually the reverse calculation, that is, from linear and r
 
 With this, the calculation of the wheel speed matrix is as follows:
 
-<center><img src="../images/wheel_rotational_speed_calc.png" alt="wheel_rotational_speed_calc" width="400" /></center>
+<center><img src="../images/wheel_rotational_speed_calc.png" alt="wheel_rotational_speed_calc" width="200" /></center>
 <!-- \begin{bmatrix}
 \ \omega_1 \\
 \ \omega_1 \\
@@ -136,7 +135,8 @@ To calculate the rotational speeds of the wheels, you must first define the valu
 robot_coord(0) = 1.0f;
 robot_coord(1) = 0.5f;
 ```
-**NOTE:** To assign appropriate values to individual elements of the vector we use the simple numbering (0), (1).
+**NOTE:** 
+- To assign appropriate values to individual elements of the vector we use the simple numbering (0), (1).
 
 Then make the calculation with the following command.
 
@@ -151,7 +151,7 @@ motor_right.setVelocity(wheel_speed(0) / (2.0f * M_PI));
 motor_left.setVelocity(wheel_speed(1) / (2.0f * M_PI));
 
 ```
+<!-- 
+## Another useful dependencies -->
 
-## Another useful dependencies
-<!-- TODO add something about turn radius -->
 
