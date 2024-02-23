@@ -17,12 +17,12 @@ The Multi-Task Differential Robot project focuses on developing a versatile robo
 
 
 ## Repository structure
-The ``main`` file contains all three algorithms. The current algorithm is visible, the rest is commented out.
+The ***main.cpp*** file contains all three algorithms. The current algorithm is visible, the rest is commented out.
 
-- ``/docs/cad`` - cad files with division into vehicle frame and gimbala construction for Pixy2. Inside there is a division into different extensions, including print-ready files. <br>
+- ``/docs/cad`` - cad files with division into vechicle frame and gimbal construction for Pixy2. Inside there is a division into different extensions, including print-ready STL files and STEP files. <br>
 - ``/docs/documentation`` - folder contains all additional markdown files <br>
 - ``/docs/images`` - folder contains all images used in markdown files <br>
-- ``/docs/solutions`` - The folder contains the main files of three different algorithms. 
+- ``/docs/solutions`` - The folder contains the main files of separate three different algorithms. 
 
 ## Hardware
 Components and sensors employed in the design:
@@ -56,7 +56,14 @@ All frame parts 3D models are localized in [CAD folder](/docs/cad/)
     - eigen
     - pm2_drivers
 
-In order to run the project you need to have Mbed Studio with which you can compile the ``main`` program and run it on the microcontroller. All the libraries you need are included in the repository. If you use a different design, kinematics, or hardware, you need to change the appropriate variables for the program to run properly. Also, if you are not using a custom PES Board, you need to change pins names that are passed as parameters while objects are defined.
+All the libraries you need are included in the repository. If you use a different design, kinematics, or hardware, you need to change the appropriate variables for the program to run properly. Also, if you are not using a custom PES Board, you need to change pins names that are passed as parameters while objects are defined.
+
+## Running project
+In order to run the project you need to import program to Mbed Studio, compile it, and the run on the board. As it was mentioned above, robot has three different functionalities. On the right side of robot there are three diodes, each one of them is sygnalizing the currently used algorithm. Colours are like:
+- Pixy follower -> red 
+- Obstacle avoider -> green
+- Line follower -> blue
+After switch on the power source robot will wait for the correct algorithm to be selected by lighting up the LEDs sequentially at five-second intervals. Pressing the **USER** button while the diode of the colour corresponding to the function in question is lit will immediately start the execution of the selected algorithm.
 
 ## Kinematics
 Comprehensive explanation and description of the kinematics of a differential robot can be found [here](/docs/documentation/kinematics.md).
@@ -72,7 +79,6 @@ Main file [**Obstacle avoider**](/docs/solutions/Line_follower_main.txt)
 ### 3. Pixy2 object follower
 The Pixy2 object follower functionality allows the robot to seamlessly track and follow designated objects within its view. By leveraging the capabilities of the Pixy2 camera, the robot identifies and locks onto the target object, ensuring precise tracking as it moves. This enables the robot to autonomously follow the object, adjusting its trajectory accordingly for smooth and accurate pursuit. Details of algorithm you can find [here](/docs/documentation/pixy_follower.md) <br>
 Main file [**Pixy2 object follower**](/docs/solutions/Line_follower_main.txt)
-
 
 ## Additions
 - The files include a map that should be printed on a large scale for the algorithm to run properly: [MAP](docs/Highspeed_2.pdf) 
