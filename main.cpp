@@ -97,7 +97,7 @@ int main()
     // led on nucleo board
     DigitalOut user_led(USER_LED);
 
-    DigitalOut led_red(PA_12);
+    DigitalOut led_red(PC_8);
     DigitalOut led_green(PB_2);
     DigitalOut led_blue(PB_12);
 
@@ -108,16 +108,16 @@ int main()
     // In the robot there will be used 31:1 Metal Gearmotor 20Dx44L mm 12V CB
     // Define variables and create DC motor objects
     const float voltage_max = 12.0f;
-    const float gear_ratio = 31.25f; 
-    const float kn = 450.0f / 12.0f; //motor constant rpm / V
-    const float velocity_max = kn * voltage_max / (60.0f * 6.0f); // Max velocity that can be reached
-    const float wheel_speed_max_rads = 2.0f * M_PI * velocity_max; 
+    const float gear_ratio = 78.125f; 
+    const float kn = 180.0f / 12.0f; //motor constant rpm / V
+    const float velocity_max = kn * voltage_max / (60.0f); // Max velocity that can be reached
     DCMotor motor_M1(PB_PWM_M1, PB_ENC_A_M1, PB_ENC_B_M1, gear_ratio, kn, voltage_max); //RIGHT
     motor_M1.setEnableMotionPlanner(true);
-    motor_M1.setMaxVelocity(velocity_max); //right
+    motor_M1.setMaxVelocity(motor_M1.getMaxPhysicalVelocity()/2.0f); //right
     DCMotor motor_M2(PB_PWM_M2, PB_ENC_A_M2, PB_ENC_B_M2, gear_ratio, kn, voltage_max); //LEFT
     motor_M2.setEnableMotionPlanner(true);
-    motor_M2.setMaxVelocity(velocity_max); //left
+    motor_M2.setMaxVelocity(motor_M2.getMaxPhysicalVelocity()/2.0f); //left
+    const float wheel_speed_max_rads = 2.0f * M_PI * motor_M1.getMaxVelocity(); 
 
     // ROBOT KINEMATICS AND GEOMETRY
     const float d_wheel = 0.0564f;        // wheel diameter
@@ -164,8 +164,8 @@ int main()
     const float R_turn_backward = L_wheel;
     const float R_turn_corner_backward = L_wheel / 2.0f;  
 
-    const float alfa_backward = 180.0f;
-    const float alfa_backward_corner = 270.0f;
+    const float alfa_backward = 90.0f;
+    const float alfa_backward_corner = 135.0f;
     const float wheel_rounds_backward = turn_angle_limit_fcn(R_turn_backward, r_wheel, L_wheel, alfa_backward);
     const float wheel_rounds_backward_corner = turn_angle_limit_fcn(R_turn_corner_backward, r_wheel, L_wheel, alfa_backward_corner);
 
@@ -174,9 +174,9 @@ int main()
     static bool isFirst = false;
 
     //IR range sensors:
-    AnalogIn ir_analog_in_left(PC_1);
-    AnalogIn ir_analog_in_right(PC_3);
-    AnalogIn ir_analog_in_front(PC_5);
+    AnalogIn ir_analog_in_left(PC_2);
+    AnalogIn ir_analog_in_right(PC_5);
+    AnalogIn ir_analog_in_front(PC_3);
     AnalogIn ir_analog_in_back(PB_1);
 
     static float ir_distance_left_cm = 0.0f;
@@ -188,8 +188,7 @@ int main()
     const float threshold = 13.0f;
 
     // LINE FOLLOWER OBJECTS AND VARIABLES
-    LineFollower lineFollower(PB_9, PB_8, bar_dist, d_wheel, L_wheel, velocity_max);
-    lineFollower.setRotationalVelocityGain(2.0f, 22.0f);
+    LineFollower lineFollower(PB_9, PB_8, bar_dist, d_wheel, L_wheel, velocity_max/2.0f);
 
     // MAIN THREAD FUNCTION
     // Timer to measure task execution time
@@ -198,30 +197,24 @@ int main()
     while (true) {
         main_task_timer.reset();
         task_selection_timer.start();
-        printf("start \n");
         switch (robot_state) {
             case RobotState::INIT: {
                 int task_selection_time_ms = std::chrono::duration_cast<std::chrono::milliseconds>(task_selection_timer.elapsed_time()).count();
-                printf("init case \n");
                 if (task_selection_time_ms >= 1000 && task_selection_time_ms < 5000){
                     pixy_follower = true;
                     led_red = 1;
-                    printf("pixy_follower \n");
-                    //LED ACTIVE
                 }
                 else if ((task_selection_time_ms >= 5000 && task_selection_time_ms < 10000)) {
                     pixy_follower = false;
                     obst_avoider = true;
                     led_red = 0;
                     led_green = 1;
-                    printf("obst_avoider \n");
                 }
                 else if ((task_selection_time_ms >= 10000 && task_selection_time_ms < 15000)) {
                     obst_avoider = false;
                     line_follower = true;
                     led_green = 0;
                     led_blue = 1;
-                    printf("line follower \n");
                 } 
                 else if (task_selection_time_ms >= 15000) {
                     led_blue = 0;
@@ -465,7 +458,8 @@ int main()
                 } else {
                     move = true;
                 }
-
+                printf("%d, %d \n", lineFollower.isLedActive(), move);
+                printf("%f", lineFollower.getAngleDegrees());
                 // state machine
                 switch (robot_state_line_follower) {
                     case RobotStateLineFollower::INITIAL_L:
