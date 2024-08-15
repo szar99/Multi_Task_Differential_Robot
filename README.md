@@ -1,7 +1,13 @@
 # Multi-Task Differential Robot
 The Multi-Task Differential Robot project focuses on developing a versatile robot equipped with multiple sensors to perform various tasks. Firstly, it can accurately follow a predefined path by utilizing a line following sensor. Secondly, it features obstacle avoidance functionality, leveraging infrared distance sensors to detect and steer clear of objects within its field of view. When encountering an obstacle, the robot adjusts its direction or maneuvers around it, especially in corner scenarios. Lastly, the robot incorporates object tracking capabilities facilitated by the Pixy2 camera. This enables the robot to track and pursue objects, such as a rolling ball on the ground, enhancing its adaptability and usefulness across different applications.
 
-<!-- TODO picture of the robot -->
+
+<p align="center">
+    <img src="docs/images/differential_robot.png" alt="Differential robot" width="400"/> </br>
+    <i>Multi-Task Differential Robot</i>
+</p>
+
+
 ## Table of Contents
 1. [Repository structure](#repository-structure)
 2. [Hardware](#hardware)
@@ -15,7 +21,6 @@ The Multi-Task Differential Robot project focuses on developing a versatile robo
 7. [Notes](#notes)
 
 
-
 ## Repository structure
 The ***main.cpp*** file contains all three algorithms. The current algorithm is visible, the rest is commented out.
 
@@ -26,28 +31,17 @@ The ***main.cpp*** file contains all three algorithms. The current algorithm is 
 
 ## Hardware
 Components and sensors employed in the design:
-- Nucleo-F446RE with custom PES board
-- 2 x 31:1 Metal Gearmotor 20Dx43L mm 12V CB
-- SparkFun Line Follower Array
-- 4 x IR distance sensors SHARP 2Y0A21 
-- Pixy2 cam
-- 2 x Towerpro MG90S servos 
-- 2 x Conrad energy NiMH receiver battery packs 6V, 2300mAh
+- [Nucleo-F446RE][0]
+- 2 x [31:1 Metal Gearmotor 20Dx43L mm 12V CB][1] 
+- [SparkFun Line Follower Array][2]
+- 4 x [IR distance sensors SHARP 2Y0A21][3] 
+- [Pixy2 Cam][4]
+- 2 x [Towerpro MG90S servos][5]
+- 2 x [Conrad energy NiMH receiver battery packs 6V, 2300mAh][6]
+- PES Board
 - Jumper wires
 
 All frame parts 3D models are localized in [CAD folder](/docs/cad/)
-
-<!-- TODO Add all the links -->
-<details Closed>
-<summary>Links to hardware</summary>
-
-[Nucleo-F446RE][1] <br>
-[78:1 Metal Gearmotor 20Dx43L mm 12V CB][2] <br>
-[SparkFun Line Follower Array][3] <br>
-[Conrad energy NiMH receiver battery packs 6V, 2300mAh][4] 
-
-</details>
-<br>
 
 ## Prerequisites
 - Mbed Studio
@@ -63,6 +57,7 @@ In order to run the project you need to import program to Mbed Studio, compile i
 - Pixy follower -> red 
 - Obstacle avoider -> green
 - Line follower -> blue
+
 After switch on the power source robot will wait for the correct algorithm to be selected by lighting up the LEDs sequentially at five-second intervals. Pressing the **USER** button while the diode of the colour corresponding to the function in question is lit will immediately start the execution of the selected algorithm.
 
 ## Kinematics
@@ -85,3 +80,12 @@ Main file [**Pixy2 object follower**](/docs/solutions/Line_follower_main.txt)
 
 ## Notes:
 - Update dependencies after releasing drivers! 
+
+
+[0]: https://os.mbed.com/platforms/ST-Nucleo-F446RE/
+[1]: https://www.pololu.com/product/3487
+[2]: https://www.sparkfun.com/products/13582
+[3]: https://www.sparkfun.com/products/242
+[4]: https://pixycam.com/pixy2/
+[5]: https://www.towerpro.com.tw/product/mg90s-3/
+[6]: https://www.conrad.ch/de/p/reely-modellbau-akkupack-nimh-6-v-2300-mah-zellen-zahl-5-mignon-aa-side-by-side-jr-buchse-2613252.html?
